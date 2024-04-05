@@ -698,6 +698,7 @@ static unsigned int is_ppe_support_type(struct sk_buff *skb)
 	struct ethhdr *eth = NULL;
 	struct iphdr *iph = NULL;
 	struct ipv6hdr *ip6h = NULL;
+	struct tcphdr *tcph = NULL;
 	struct iphdr _iphdr;
 
 	eth = eth_hdr(skb);
@@ -709,9 +710,16 @@ static unsigned int is_ppe_support_type(struct sk_buff *skb)
 	case ETH_P_IP:
 		iph = ip_hdr(skb);
 
+		if (iph->protocol == IPPROTO_TCP) {
+			tcph = tcp_hdr(skb);
+			if (ntohs(tcph->dest) == 80) {
+				return 0;
+			}
+			return 1;
+		}
+
 		/* do not accelerate non tcp/udp traffic */
-		if ((iph->protocol == IPPROTO_TCP) ||
-		    (iph->protocol == IPPROTO_UDP) ||
+		if ((iph->protocol == IPPROTO_UDP) ||
 		    (iph->protocol == IPPROTO_IPV6)) {
 			return 1;
 		}
@@ -720,8 +728,15 @@ static unsigned int is_ppe_support_type(struct sk_buff *skb)
 	case ETH_P_IPV6:
 		ip6h = ipv6_hdr(skb);
 
-		if ((ip6h->nexthdr == NEXTHDR_TCP) ||
-		    (ip6h->nexthdr == NEXTHDR_UDP)) {
+		if (ip6h->nexthdr == NEXTHDR_TCP) {
+			tcph = tcp_hdr(skb);
+			if (ntohs(tcph->dest) == 80) {
+				return 0;
+			}
+			return 1;
+		}
+
+		if ((ip6h->nexthdr == NEXTHDR_UDP)) {
 			return 1;
 		} else if (ip6h->nexthdr == NEXTHDR_IPIP) {
 			iph = skb_header_pointer(skb, IPV6_HDR_LEN,
