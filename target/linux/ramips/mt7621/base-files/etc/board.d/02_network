@@ -133,6 +133,10 @@ ramips_setup_interfaces()
 		ucidef_add_switch "switch0" \
 			"1:lan" "2:lan" "3:lan" "4:lan" "0:wan" "6u@eth0" "5u@eth1"
 		;;
+	raisecom,msg1500-x-00)
+		ucidef_add_switch "switch0" \
+			"0:lan:4" "1:lan:3" "2:lan:2" "3:lan:1" "4:wan:5" "6u@eth0" "5u@eth1"
+		;;
 	netgear,r6220|\
 	netgear,r6260|\
 	netgear,r6350|\
@@ -319,8 +323,8 @@ ramips_setup_macs()
 		lan_mac=$(macaddr_add $label_mac 1)
 		;;
 	raisecom,msg1500-x-00)
-		lan_mac=$(mtd_get_mac_ascii Config protest_lan_mac)
 		wan_mac=$(mtd_get_mac_ascii Config protest_wan_mac)
+		lan_mac=$(macaddr_add "$wan_mac" -3)
 		label_mac=$lan_mac
 		;;
 	yuncore,ax820)
